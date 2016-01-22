@@ -5,7 +5,7 @@ import os
 import hashlib
 import sys
 
-# bytes to read at a time from file (10meg)
+# smaller values for this variable shields more pks but inflicts more IO
 readlength=512
 
 if len(sys.argv)!=2:
