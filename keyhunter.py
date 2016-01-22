@@ -16,10 +16,6 @@ filename = sys.argv[1]
 
 prekeys = ["308201130201010420".decode('hex'), "308201120201010420".decode('hex')]
 
-#prekeys = ["06052b8104000a30740201010420".decode('hex')]
-
-#magic = '\x01\x30\x82\x01\x13\x02\x01\x01\x04\x20'
-
 wif = False
 
 
@@ -69,11 +65,8 @@ def proc(f,comp):
 	# one block at a time
 
 	lastdata = ""
-
 	rs = 0
-
 	pks = []
-
 	f.seek(0)
 
 	while True:
@@ -92,12 +85,6 @@ def proc(f,comp):
   		while True:
     			# find the magic number
     			pos=data.find(magic,x)
-    			#if pos==-1:
-			#	break
-			#if comp == "1":
-				#hexkey += "\01"
-    			#print EncodeBase58Check(hexkey)
-			#else:
 
 			if pos > 0:
 				hexkey = data[pos+magiclen:pos+magiclen+32]
@@ -120,8 +107,6 @@ def proc(f,comp):
 	return pks
 
 # code grabbed from pywallet.py
-
-
 
 def print_results(pks,wif,comp):
 	pks = sorted(set(pks))
