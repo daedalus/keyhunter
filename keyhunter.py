@@ -6,7 +6,7 @@ import hashlib
 import sys
 
 # bytes to read at a time from file (10meg)
-readlength=10*1024*1024
+readlength=512
 
 if len(sys.argv)!=2:
   print "./keyhunter.py <filename>"
@@ -14,10 +14,13 @@ if len(sys.argv)!=2:
 
 filename = sys.argv[1]
 
-f = open(filename)
-magic = '\x01\x30\x82\x01\x13\x02\x01\x01\x04\x20'
-magiclen = len(magic)
+prekeys = ["308201130201010420".decode('hex'), "308201120201010420".decode('hex')]
 
+#prekeys = ["06052b8104000a30740201010420".decode('hex')]
+
+#magic = '\x01\x30\x82\x01\x13\x02\x01\x01\x04\x20'
+
+wif = False
 
 
 ##### start code from pywallet.py #############
@@ -58,32 +61,90 @@ def EncodeBase58Check(secret):
 ########## end code from pywallet.py ############
 
 
+def proc(f,comp):
+	prekeys = ["308201130201010420".decode('hex'), "308201120201010420".decode('hex')]
+	magic = prekeys[comp]
+	magiclen = len(magic)
+	# read through target file
+	# one block at a time
 
-# read through target file
-# one block at a time
-while True:
-  data = f.read(readlength)
-  if not data:
-    break
+	lastdata = ""
 
-  # look in this block for keys
-  x=0
-  while True:
-    # find the magic number
-    pos=data.find(magic,x)
-    #pos=data.find('\13\02\01\01\04\20',0)
-    if pos==-1:
-      break
-    print EncodeBase58Check('\x80'+data[pos+magiclen:pos+magiclen+32])
-    x+=(pos+1)
+	rs = 0
+
+	pks = []
+
+	f.seek(0)
+
+	while True:
+		data = ""
+		data += lastdata
+		fdata = f.read(readlength)
+		data += fdata
+
+		rs += len(fdata)
+
+  		if len(fdata) == 0:
+    			break
+
+  		# look in this block for keys
+  		x=0
+  		while True:
+    			# find the magic number
+    			pos=data.find(magic,x)
+    			#if pos==-1:
+			#	break
+			#if comp == "1":
+				#hexkey += "\01"
+    			#print EncodeBase58Check(hexkey)
+			#else:
+
+			if pos > 0:
+				hexkey = data[pos+magiclen:pos+magiclen+32]
+				pks.append(hexkey)
+			else:
+				break
+
+    			x+=(pos+1)
   
-  # are we at the end of the file?
-  if len(data) < readlength:
-    break
+  		# are we at the end of the file?
+  		if len(fdata) < readlength:
+    			break
 
-  # make sure we didn't miss any keys at the end of the block
-  f.seek(f.tell()-(32+magiclen))
+ 		 # make sure we didn't miss any keys at the end of the block
+  		f.seek(f.tell()-(32+magiclen))
+		lastdata = fdata
+	
+	#print "MByes read:", (rs / (1024**2))
+
+	return pks
 
 # code grabbed from pywallet.py
 
 
+
+def print_results(pks,wif,comp):
+	pks = sorted(set(pks))
+
+	for pk in pks:
+		if wif:
+			pk = '\x80' + pk
+			if comp == 1:
+				pk += "\01"
+			print EncodeBase58Check(pk)
+		else:
+			print binascii.hexlify(pk).zfill(64)
+
+
+def main():
+	f = open(filename)
+	pksu = proc(f,0)
+	pksc = proc(f,1)
+	f.close()
+	if wif:
+		print_results(pksu + pksc,wif,0)
+	else:
+		print_results(pksu,wif,0)
+		print_results(pksc,wif,1)
+
+main()
