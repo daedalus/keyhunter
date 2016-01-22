@@ -72,12 +72,12 @@ def proc(f,comp):
 	while True:
 		data = ""
 		data += lastdata
-		fdata = f.read(readlength)
-		data += fdata
+		readbuff = f.read(readlength)
+		data += readbuff
 
-		rs += len(fdata)
+		rs += len(readbuff)
 
-  		if len(fdata) == 0:
+  		if len(readbuff) == 0:
     			break
 
   		# look in this block for keys
@@ -95,12 +95,12 @@ def proc(f,comp):
     			x+=(pos+1)
   
   		# are we at the end of the file?
-  		if len(fdata) < readlength:
+  		if len(readbuff) < readlength:
     			break
 
  		 # make sure we didn't miss any keys at the end of the block
   		f.seek(f.tell()-(32+magiclen))
-		lastdata = fdata
+		lastdata = readbuff
 	
 	#print "MByes read:", (rs / (1024**2))
 
